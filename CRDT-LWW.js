@@ -58,15 +58,26 @@ class CustomSet {
     if(!this.has(element.get_value())) {
       this.data.push(element);
     } else {
-      this.get(element.get_value()).timestamp = element.timestamp;
+      // console.log("Timestamp debug");
+      // console.log("Element: " + element.get_value());
+      // console.log(this.get(element.get_value()).get_timestamp());
+      // console.log(element.get_timestamp());
+      if(this.get(element.get_value()).get_timestamp() < element.get_timestamp()) {
+        this.get(element.get_value()).timestamp = element.timestamp;
+      }
     }
   }
 
   // Basic Set operations modified from https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Set
   union(datasetB) {
-    let union = new CustomSet(this.data);
+    let union = new CustomSet();
+    for (let elem of this.data) {
+      let temp = new Element(elem.get_value(), elem.get_timestamp());
+      union.add(temp);
+    }
     for (let elem of datasetB.data) {
-      union.add(elem);
+      let temp = new Element(elem.get_value(), elem.get_timestamp());
+      union.add(temp);
     }
     return union;
   }
@@ -90,6 +101,12 @@ class DataSet {
 
   lookup(item, time=Date.now()) {
     return this.setAdd.has(item) && (!this.setRemove.has(item) || (this.setRemove.has(item)?(this.setRemove.get(item).get_timestamp() < this.setAdd.get(item).get_timestamp()):false));
+  }
+
+  get(item, time=Date.now()) {
+    if(this.lookup(item, time)) {
+      return this.setAdd.get(item);
+    }
   }
   
   add(item, time=Date.now()) {
@@ -137,6 +154,12 @@ assert(dataSetA.lookup("a"), "Basic removal.");
 assert(!dataSetA.lookup("c"), "Basic removal.");
 assert(!dataSetA.lookup("e"), "Basic removal.");
 
+
+function wait(ms) {
+  var start = +(new Date());
+  while (new Date() - start < ms);
+}
+wait(10);
 dataSetA.add("d");
 assert(dataSetA.lookup("a"), "Re-insert after removal.");
 assert(dataSetA.lookup("d"), "Re-insert after removal.");
@@ -176,3 +199,6 @@ assert(!dataSetC.lookup("e"), "Verify DataSet content after merge. '!e'");
 assert(!dataSetC.lookup("g"), "Verify DataSet content after merge. '!g'");
 assert(!dataSetC.lookup("h"), "Verify DataSet content after merge. '!h'");
 assert(!dataSetC.lookup("m"), "Verify DataSet content after merge. '!m'");
+
+assert(dataSetC.get("a").get_timestamp() === dataSetB.get("a").get_timestamp(), "Check timestamp.");
+assert(dataSetC.get("a").get_timestamp() > dataSetA.get("a").get_timestamp(), "Check timestamp.");
